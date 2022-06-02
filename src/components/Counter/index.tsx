@@ -1,65 +1,81 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Style from "./Counter.module.css";
 import UnitCount from "./UnitCount";
 
-class Counter extends React.Component<
-  { reset: boolean; toggleReset:() => void },
-  { days: number; hours: number; mins: number; secs: number }
-> {
-  state = {
-    days: 2,
-    hours: 2,
-    mins: 2,
-    secs: 2,
-  };
-  componentDidMount() {
-    setInterval(() => this.getTimeDifference(), 1000);
-  }
+const Counter = (props: { reset: boolean; toggleReset: () => void }) => {
+  const [days, setDays] = useState(2);
+  const [hours, setHours] = useState(2);
+  const [mins, setMins] = useState(2);
+  const [secs, setSecs] = useState(2);
+  const counter = useRef<NodeJS.Timer>();
 
-  getTimeDifference() {
-    let secs = this.state.secs - 1;
-    let mins = this.state.mins;
-    let hours = this.state.hours;
-    let days = this.state.days;
-    if (secs < 0) {
-      secs = 59;
-      mins = mins - 1;
-      if (mins < 0) {
-        mins = 59;
-        hours = hours - 1;
-        if (hours < 0) {
-          hours = 23;
-          days = Math.max(days - 1, 0);
+  useEffect(() => {
+    if (props.reset) {
+      let reset: number = 2;
+      setDays(reset);
+      setHours(reset);
+      setMins(reset);
+      setSecs(reset);
+      counter.current = setInterval(
+        () => getTimeDifference(reset, reset, reset, reset),
+        1000
+      );
+      props.toggleReset();
+    } else {
+      counter.current = setInterval(
+        () => getTimeDifference(days, hours, mins, secs),
+        1000
+      );
+    }
+
+    return () => {
+      clearInterval(counter.current);
+    };
+  });
+
+  const getTimeDifference = (
+    days: number,
+    hours: number,
+    mins: number,
+    secs: number
+  ) => {
+    let lsecs = secs - 1;
+    let lmins = mins;
+    let lhours = hours;
+    let ldays = days;
+    if (lsecs < 0) {
+      lsecs = 59;
+      lmins = lmins - 1;
+      if (lmins < 0) {
+        lmins = 59;
+        lhours = lhours - 1;
+        if (lhours < 0) {
+          lhours = 23;
+          ldays = ldays - 1;
+          if (ldays < 0) {
+            ldays = 0;
+            lmins = 0;
+            lhours = 0;
+            lsecs = 0;
+            clearInterval(counter.current);
+          }
         }
       }
     }
 
-    this.setState({ days, hours, mins, secs });
-  }
+    setDays(ldays);
+    setHours(lhours);
+    setMins(lmins);
+    setSecs(lsecs);
+  };
 
-  componentWillUnmount(){
-    clearInterval();
-  }
-  render() {
-      if(this.props.reset){
-          this.setState({
-            days: 2,
-            hours: 2,
-            mins: 2,
-            secs: 2,
-        })
-        this.props.toggleReset();
-      }
-    return (
-      <div className={Style.Counter}>
-        {Object.keys(this.state).map((unit, index) => {
-          type ObjectKey = keyof typeof this.state;
-          const attr = unit as ObjectKey;
-          return <UnitCount type={unit} key={index} count={this.state[attr]} />;
-        })}
-      </div>
-    );
-  }
-}
-
+  return (
+    <div className={Style.Counter}>
+      <UnitCount type={"Days"} count={days} />
+      <UnitCount type={"Hours"} count={hours} />
+      <UnitCount type={"Mins"} count={mins} />
+      <UnitCount type={"Secs"} count={secs} />
+    </div>
+  );
+};
 export default Counter;

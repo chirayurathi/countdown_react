@@ -1,7 +1,7 @@
 import React from 'react'
 import  Style  from './UnitCount.module.css';
 
-const UnitCount = (props:{count:number,type:string,key:number}) => {
+const UnitCount = (props:{count:number,type:string}) => {
     return(
         <div className={Style.UnitCount}>
             <h1>{props.count}</h1>
